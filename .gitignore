@@ -1,0 +1,17 @@
+# Ignore Python virtual environments
+env/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore IDE/editor folders
+.vscode/
+.idea/
+
+# Other common ignore rules
+*.log
+.DS_Store
+Thumbs.db
