@@ -16,7 +16,7 @@ This is a simple Flask web application for conducting quiz competitions. It has 
    ```bash
    git clone https://github.com/pranta-iitp/Quiz-Competition.git
    cd Quiz-Competition
-````
+   ```
 
 2. Create virtual environment and activate:
 
