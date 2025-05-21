@@ -1,0 +1,25 @@
+*{padding: 0; margin: 0; box-sizing: border-box;}
+body{
+overflow-x: hidden;
+
+}
+h1{
+
+font-family: 'Dancing Script', cursive;}
+
+.carousel-inner img {
+    width: 75%;        /* or any height you want */
+    height: 80vh;
+}
+.carousel-caption {
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 1rem;
+    border-radius: 10px;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: black;
+    border-radius: 50%;
+}
