@@ -1,4 +1,3 @@
-You should copy and paste **everything between the two lines** labeled:
 # Quiz Competition Web App
 
 This is a simple Flask web application for conducting quiz competitions. It has roles for authors to create quizzes and participants to take them.
