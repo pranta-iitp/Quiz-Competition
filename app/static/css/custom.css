@@ -23,3 +23,7 @@ font-family: 'Dancing Script', cursive;}
     background-color: black;
     border-radius: 50%;
 }
+.carousel-caption h5 {
+  font-size: 2rem;
+  font-weight: bold;
+}

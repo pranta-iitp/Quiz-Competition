@@ -1,0 +1,42 @@
+<!-- templates/participant_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Participant Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Welcome, {{ session['user_name'] }} </h2>
+
+    <div class="d-flex flex-wrap mb-4">
+      <button class="btn btn-primary m-2" onclick="loadSection('quizzes')">Available Quizzes</button>
+      <button class="btn btn-primary m-2" onclick="loadSection('scores')">My Score</button>
+      <button class="btn btn-primary m-2" onclick="loadSection('update_profile')">Update Profile</button>
+      <a href="{{ url_for('logout_method') }}" class="btn btn-danger m-2">Log Out</a>
+    </div>
+
+    <!-- Dynamic content area -->
+    <div id="content-area" class="mt-4 border rounded p-4">
+      <p>Select an action to load content here.</p>
+    </div>
+  </div>
+
+  <!-- JavaScript to handle AJAX -->
+  <script>
+    function loadSection(section) {
+      fetch(`/participant/section/${section}`)
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('content-area').innerHTML = data;
+        })
+        .catch(error => {
+          console.error('Error loading section:', error);
+          document.getElementById('content-area').innerHTML = "<p>Error loading content.</p>";
+        });
+    }
+  </script>
+   <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+</body>
+</html>

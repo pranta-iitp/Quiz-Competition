@@ -1,0 +1,32 @@
+<h2>Update Your Profile</h2>
+    <form method="POST" action="/update_profile_author">
+        <div class="mb-3">
+            <label for="author_name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="author_name" name="author_name" value="{{ author.author_name or '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="author_email" class="form-label">Email (read-only)</label>
+            <input type="email" class="form-control" id="author_email" name="author_email" value="{{ author.author_email }}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Subject A</label>
+            <input type="text" class="form-control" name="author_subject_a" value="{{ author.author_subject_a or '' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Subject B</label>
+            <input type="text" class="form-control" name="author_subject_b" value="{{ author.author_subject_b or '' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Subject C</label>
+            <input type="text" class="form-control" name="author_subject_c" value="{{ author.author_subject_c or '' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Subject D</label>
+            <input type="text" class="form-control" name="author_subject_d" value="{{ author.author_subject_d or '' }}">
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <a href="{{ url_for('author_dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>

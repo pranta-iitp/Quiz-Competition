@@ -1,0 +1,39 @@
+<!-- templates/register_success.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registration Success</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+</head>
+<body>
+  <!-- Modal -->
+  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="successModalLabel">Registration Successful</h5>
+        </div>
+        <div class="modal-body">
+          You have registered successfully!
+        </div>
+        <div class="modal-footer">
+          <a href="{{ url_for('home') }}" class="btn btn-primary">Go to Homepage</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="{{ url_for('static', filename='js/jquery-3.3.1.slim.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+  <!-- Auto-launch Modal -->
+  <script>
+    window.onload = function() {
+      var modal = new bootstrap.Modal(document.getElementById('successModal'));
+      modal.show();
+    };
+  </script>
+</body>
+</html>

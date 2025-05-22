@@ -1,0 +1,31 @@
+<h2>Required Information to geanrate a quiz</h2>
+    <form method="POST" action="/new_quiz_attr">
+        <div class="mb-3">
+            <label for="quiz_title" class="form-label">Quiz Title</label>
+            <input type="text" class="form-control" id="quiz_title" name="quiz_title" >
+        </div>
+
+        <div class="mb-3">
+            
+            <input type="hidden" class="form-control" name="quiz_author_id" value="{{ author.autor_id or '' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <input type="text" class="form-control" name="quiz_subject" >
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Number of questions</label>
+            <input type="text" class="form-control" name="quiz_num_questions">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Mark per question</label>
+            <input type="text" class="form-control" name="quiz_marks_per_question" >
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Negative mark per question</label>
+            <input type="text" class="form-control" name="quiz_negative_marks" >
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Information</button>
+        <a href="{{ url_for('author_dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>

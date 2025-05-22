@@ -1,0 +1,13 @@
+<!-- Action button 1 -->
+      <div class="mb-4">
+        <a href="{{ url_for('create_quiz') }}" class="btn btn-primary m-1">Create New Quiz</a>
+      </div>
+      <!-- Action button 2 -->
+      <div class="mb-4">
+        <a href="{{ url_for('update_profile_author') }}" class="btn btn-primary m-1">Update Profile</a>
+      </div>
+      <!-- Action button 3 -->
+      <div class="mb-4">
+        <a href="{{ url_for('logout_method') }}" class="btn btn-danger m-1">Log Out</a>
+      </div>
+    </div>
