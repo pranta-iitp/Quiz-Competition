@@ -1,1 +1,30 @@
-active_quizzes.html
+<h2>My Quizzes</h2>
+{% if quizzes %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th hidden>Quiz ID</th>
+            <th>Title</th>
+            <th>Created On</th>
+            <th>Subject</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for quiz in quizzes %}
+        <tr>
+            <td hidden>{{ quiz.quiz_id }}</td>
+            <td>{{ quiz.quiz_title }}</td>
+            <td>{{ quiz.created_at.strftime('%Y-%m-%d') if quiz.created_at else 'N/A' }}</td>
+            <td>{{ quiz.quiz_subject }}</td>
+            <td>
+                {{ quiz.quiz_status}}
+            </td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>You have not created adadny quizzes yet.</p>
+{% endif %}

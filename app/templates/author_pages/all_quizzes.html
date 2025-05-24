@@ -1,1 +1,36 @@
-all_quizzes.html
+<h2>My Quizzes</h2>
+{% if quizzes %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th hidden>Quiz ID</th>
+            <th>Title</th>
+            <th>Created On</th>
+            <th>Subject</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for quiz in quizzes %}
+        <tr>
+            <td hidden>{{ quiz.quiz_id }}</td>
+            <td>{{ quiz.quiz_title }}</td>
+            <td>{{ quiz.created_at.strftime('%Y-%m-%d') if quiz.created_at else 'N/A' }}</td>
+            <td>{{ quiz.quiz_subject }}</td>
+            <td>
+                <form action="{{ url_for('update_quiz_status', quiz_id=quiz.quiz_id,author_id=author.author_id) }}" method="POST">
+                    <select name="quiz_status" onchange="this.form.submit()">
+                        <option value="Inactive" {% if quiz.quiz_status == 2 %}selected{% endif %}>Inactive</option>
+                        <option value="Active" {% if quiz.quiz_status == 1 %}selected{% endif %}>Active</option>
+                        <option value="Archived" {% if quiz.quiz_status == 3 %}selected{% endif %}>Archived</option>
+                    </select>
+                </form>
+            </td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>You have not created any quizzes yet.</p>
+{% endif %}
