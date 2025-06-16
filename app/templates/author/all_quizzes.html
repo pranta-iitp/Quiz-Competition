@@ -1,7 +1,7 @@
 <h2>My Quizzes</h2>
 {% if quizzes %}
-<table class="table table-bordered">
-    <thead>
+<table class="table table-bordered table-hover shadow-sm">
+    <thead class="table-light">
         <tr>
             <th hidden>Quiz ID</th>
             <th>Title</th>
@@ -14,11 +14,16 @@
         {% for quiz in quizzes %}
         <tr>
             <td hidden>{{ quiz.quiz_id }}</td>
-            <td>{{ quiz.quiz_title }}</td>
+            <td>
+                <a href="{{ url_for('quiz.create_questions', quiz_id=quiz.quiz_id,user_id = author.author_user_id) }}" 
+                   class="text-decoration-none text-primary fw-bold" target="_blank">
+                    {{ quiz.quiz_title }}
+                </a>
+            </td>
             <td>{{ quiz.created_at.strftime('%Y-%m-%d') if quiz.created_at else 'N/A' }}</td>
             <td>{{ quiz.quiz_subject }}</td>
             <td>
-                <form action="{{ url_for('update_quiz_status', quiz_id=quiz.quiz_id,author_id=author.author_id) }}" method="POST">
+                <form action="{{ url_for('quiz.update_quiz_status', quiz_id=quiz.quiz_id,author_id=author.author_id) }}" method="POST">
                     <select name="quiz_status" onchange="this.form.submit()">
                         <option value="Inactive" {% if quiz.quiz_status == 2 %}selected{% endif %}>Inactive</option>
                         <option value="Active" {% if quiz.quiz_status == 1 %}selected{% endif %}>Active</option>
@@ -26,7 +31,6 @@
                     </select>
                 </form>
             </td>
-
         </tr>
         {% endfor %}
     </tbody>

@@ -1,5 +1,6 @@
-from app import app
+from app import create_app
+
+app = create_app()
 
 if __name__ == "__main__":
-    print(app.url_map)  # Shows all registered endpoints
     app.run(debug=True)

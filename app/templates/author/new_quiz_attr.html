@@ -1,0 +1,116 @@
+<h2>Required Information to Generate a Quiz</h2>
+
+<form method="POST" action="/author/new_quiz_attr">
+    <div class="mb-3">
+        <label for="quiz_title" class="form-label">Quiz Title</label>
+        <input type="text" class="form-control" id="quiz_title" name="quiz_title" required>
+    </div>
+
+    <input type="hidden" class="form-control" name="quiz_author_id" value="{{ author.author_id or '' }}">
+
+    <!-- <div class="mb-3">
+        <label class="form-label">Subject</label>
+        <input type="text" class="form-control" name="quiz_subject" required>
+    </div> -->
+
+    <div class="mb-3">
+    <label class="form-label">Subject</label>
+    <select class="form-control" name="quiz_subject" id="quiz_subject" required>
+        <option value="">Select</option>
+        {% if author.author_subject_a %}
+            <option value="{{ author.author_subject_a }}">{{ author.author_subject_a }}</option>
+        {% endif %}
+        {% if author.author_subject_b %}
+            <option value="{{ author.author_subject_b }}">{{ author.author_subject_b }}</option>
+        {% endif %}
+        {% if author.author_subject_c %}
+            <option value="{{ author.author_subject_c }}">{{ author.author_subject_c }}</option>
+        {% endif %}
+        {% if author.author_subject_d %}
+            <option value="{{ author.author_subject_d }}">{{ author.author_subject_d }}</option>
+        {% endif %}
+    </select>
+</div>
+
+
+    <div class="mb-3">
+        <label class="form-label">Number of Questions</label>
+        <input type="number" class="form-control" id="quiz_num_questions" name="quiz_num_questions" min="1" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Time per question(in seconds)</label>
+        <input type="number" class="form-control" id="quiz_time_per_question" name="quiz_time_per_question"  required>
+    </div>
+
+   <div class="mb-3">
+    <label class="form-label">Quiz Duration (in seconds)</label>
+    <input type="number" class="form-control" id="quiz_duration" name="quiz_duration" readonly>
+    <small class="form-text text-muted">Automatically calculated: Number of Questions × Time per Question</small>
+    <div id="duration_display" class="mt-2 text-success"></div> <!-- Added display container -->
+</div>
+
+
+    <div class="mb-3">
+        <label class="form-label">Marks per Question</label>
+        <input type="number" class="form-control" name="quiz_marks_per_question" step="0.01" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Negative Mark per Question</label>
+        <input type="number" class="form-control" name="quiz_negative_marks" step="0.01" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Number of Allowd Attempt</label>
+        <input type="number" class="form-control" id="quiz_num_allowed_attempt" name="quiz_num_allowed_attempt" min="1" max="5" required>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save Information</button>
+    <a href="{{ url_for('author.new_quiz_attr') }}" class="btn btn-secondary">Cancel</a>
+</form>
+
+<script>
+function calculateQuizDuration() {
+    const numQuestions = document.getElementById('quiz_num_questions').value;
+    const timePerQuestion = document.getElementById('quiz_time_per_question').value;
+    const durationField = document.getElementById('quiz_duration');
+    const durationDisplay = document.getElementById('duration_display');
+    
+    if (numQuestions && timePerQuestion) {
+        const totalDurationSeconds = parseInt(numQuestions) * parseInt(timePerQuestion);
+        durationField.value = totalDurationSeconds;
+        
+        // Convert to H:M:S
+        const hours = Math.floor(totalDurationSeconds / 3600);
+        const minutes = Math.floor((totalDurationSeconds % 3600) / 60);
+        const seconds = totalDurationSeconds % 60;
+        
+        let displayText = `Total Duration: ${totalDurationSeconds} seconds`;
+
+        if (hours > 0) {
+            displayText += ` (${hours}h ${minutes}m ${seconds}s)`;
+        } else if (minutes > 0) {
+            displayText += ` (${minutes}m ${seconds}s)`;
+        } else {
+            displayText += ` (${seconds} seconds)`;
+        }
+
+        durationDisplay.innerHTML = `
+            <strong>${displayText}</strong><br>
+            <small class="text-info">
+                ${numQuestions} questions × ${timePerQuestion} seconds = ${totalDurationSeconds} seconds
+            </small>
+        `;
+    } else {
+        durationField.value = '';
+        durationDisplay.innerHTML = '<span class="text-muted">Enter number of questions and time per question to see total duration</span>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('quiz_num_questions').addEventListener('input', calculateQuizDuration);
+    document.getElementById('quiz_time_per_question').addEventListener('input', calculateQuizDuration);
+    calculateQuizDuration(); // Run on load
+});
+</script>

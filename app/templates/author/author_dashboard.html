@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Author Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+</head>
+<body>
+
+  <div class="container mt-5">
+    <h2>Welcome, {{author.author_name}}</h2>
+    <p class="text-muted">Role: {{ session['user_role'] | capitalize }}</p>
+
+    <hr>
+
+    <!-- Flash Messages Display -->
+   {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% set category, message = messages[0] %}
+         <!-- <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div> -->
+            <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var modalBody = document.getElementById('flashMessageModalBody');
+        if (modalBody) {
+          modalBody.innerHTML = {{ message|tojson }};
+          var flashModal = new bootstrap.Modal(document.getElementById('flashMessageModal'));
+          flashModal.show();
+        }
+      });
+    </script>
+      {% endif %}
+    {% endwith %}
+  
+    <div class="d-flex flex-wrap mb-4">
+      <button class="btn btn-primary m-2" onclick="loadSection('new_quiz')">Create New Quiz {{author.author_email}}</button>
+      <button class="btn btn-primary m-2" onclick="loadSection('all_quizzes')">View My Quizzes</button>
+      <button class="btn btn-primary m-2" onclick="loadSection('manage_quizzes')">Manage My Quizzes</button>
+<!--       
+      <button class="btn btn-primary m-2" onclick="loadSection('active_quizzes')">Active & Live</button>
+      <button class="btn btn-primary m-2" onclick="loadSection('inactive_quizzes')">Inactive</button>
+      <button class="btn btn-primary m-2" onclick="loadSection('archived_quizzes')">Archived Quizzes</button>-->
+      <button class="btn btn-primary m-2" onclick="loadSection('update_profile_author')">Update Profile</button> 
+      <a href="{{ url_for('main.logout_method') }}" class="btn btn-danger m-2">Log Out</a>
+    </div>
+
+   <!-- Dynamic content area -->
+    <div id="content-area" class="mt-4 border rounded p-4">
+      <div class="text-center">
+        <h4>Welcome to Your Quiz Dashboard</h4>
+        <p class="text-muted">Select an action above to get started with quizzes.</p>
+        <div class="mt-4">
+          <i class="fas fa-quiz fa-3x text-primary mb-3"></i>
+          <p>Ready to test your knowledge? Choose from available quizzes or check your previous attempts.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- Hidden fields to store backend data -->
+<input type="hidden" id="author-id" value="{{ author.author_user_id if author else '' }}">
+<input type="hidden" id="author-email" value="{{ author.author_email if author else '' }}">
+<input type="hidden" id="user-role" value="{{ user_role if user_role else '' }}">
+  <!-- JavaScript to handle AJAX -->
+  <script>
+
+    function loadSection(section) {
+  const authorId = document.getElementById('author-id').value;
+  console.log('authorId:'+authorId);
+  fetch(`/author/section/${authorId}/${section}`)
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('content-area').innerHTML = data;
+      // Dynamically load JS for the child page if needed
+      if(section === 'manage_quizzes') {
+        const script = document.createElement('script');
+        script.src = '/static/js/manage_quizzes.js'; // Adjust path if needed
+        script.onload = function() {
+          // Optionally, call window.loadQuizzes('Active') here if not auto-triggered
+          window.loadQuizzes('Active');
+        };
+        document.body.appendChild(script);
+      }
+    })
+    .catch(error => {
+      document.getElementById('content-area').innerHTML = "<p>Error loading content.</p>";
+    });
+}
+
+  </script>
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+
+    <div class="modal fade" id="flashMessageModal" tabindex="-1" aria-labelledby="flashMessageModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="flashMessageModalLabel">Notification</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="flashMessageModalBody">
+        <!-- Message will be injected here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

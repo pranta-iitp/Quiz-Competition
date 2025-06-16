@@ -2,25 +2,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Participitant Registration</title>
+  <title>Participant Registration</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 </head>
 <body class="container mt-5">
-  <h2>Register as Participitant</h2>
-  <form method="POST" action="{{ url_for('register_participant') }}">
+  
+ <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="successModalLabel">Registration Successful</h5>
+        </div>
+        <div class="modal-body">
+          You have registered successfully!
+        </div>
+        <div class="modal-footer">
+          <a href="{{ url_for('main.home') }}" class="btn btn-primary">Go to Homepage</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Register as Participant</h2>
+  <form id="registration_form">
+    <input type="hidden" id="userRole" name="userRole" class="form-control" value="participant" />
     <div class="form-group">
       <label for="username">Username:</label>
-      <input type="text" name="username" class="form-control" required>
+      <input type="text"  id="username" class="form-control" required>
     </div>
     <div class="form-group">
       <label for="email">Email:</label>
-      <input type="email" name="email" class="form-control" required>
+      <input type="email"  id="email" class="form-control" required>
     </div>
     <div class="form-group">
       <label for="password">Password:</label>
-      <input type="password" name="password" class="form-control" required>
+      <input type="password"  id="password" class="form-control" required>
     </div>
     <button type="submit" class="btn btn-primary mt-3">Register</button>
   </form>
+<!-- Bootstrap JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/authentication.js') }}"></script>
 </body>
 </html>

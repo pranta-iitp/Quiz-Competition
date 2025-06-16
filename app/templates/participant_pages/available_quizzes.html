@@ -1,0 +1,92 @@
+<h2 class="mb-4 text">My Available Quizzes</h2>
+
+<!-- Flash Message Modal -->
+<div class="modal fade" id="flashModal" tabindex="-1" aria-labelledby="flashModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="flashModalLabel">Notification</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="flashModalBody">
+        <!-- Flash messages will be injected here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden div to store flash messages -->
+<div id="flash-messages" style="display: none;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-item" data-category="{{ category }}" data-message="{{ message }}"></div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+{% if quizzes %}
+<table class="table table-bordered table-hover shadow-sm">
+    <thead class="table-light">
+        <tr>
+            <th hidden>Quiz ID</th>
+            <th>Title</th>
+            <th>Created On</th>
+            <th>Subject</th>
+            <th>Author Name</th>
+            <th>Allowed Attempts</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for quiz in quizzes %}
+        <tr>
+            <td hidden>{{ quiz.quiz_id }}</td>
+            <td>
+                <a href="{{ url_for('quiz.attempt_quiz', quiz_id=quiz.quiz_id, participant_id=participant.participant_id) }}" 
+                   class="text-decoration-none fw-semibold text-primary">
+                    {{ quiz.quiz_title }}
+                </a>
+            </td>
+            <td>{{ quiz.created_at.strftime('%Y-%m-%d') if quiz.created_at else 'N/A' }}</td>
+            <td>{{ quiz.quiz_subject }}</td>
+            <td>{{ quiz.quiz_author_name or 'N/A' }}</td>
+            <td>{{ quiz.quiz_num_allowed_attempt }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted text-center">You have no available quizzes right now.</p>
+{% endif %}
+
+<!-- Flash Messages Modal JavaScript -->
+<script>
+    function displayFlashMessages() {
+        const flashItems = document.querySelectorAll('#flash-messages .flash-item');
+        const modalBody = document.getElementById('flashModalBody');
+
+        if (flashItems.length > 0) {
+            modalBody.innerHTML = '';
+
+            flashItems.forEach(item => {
+                const category = item.getAttribute('data-category');
+                const message = item.getAttribute('data-message');
+                const alertHTML = `
+                    <div class="alert alert-${category} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                modalBody.innerHTML += alertHTML;
+            });
+
+            const modal = new bootstrap.Modal(document.getElementById('flashModal'));
+            modal.show();
+
+            setTimeout(() => modal.hide(), 3000);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', displayFlashMessages);
+</script>

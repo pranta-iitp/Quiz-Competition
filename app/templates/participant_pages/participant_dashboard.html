@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Participant Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+</head>
+<body>
+
+  <div class="container mt-5">
+    <h2>Welcome, {{ session['user_name'] }}</h2>
+    <p class="text-muted">Role: {{ session['user_role'] | capitalize }}</p>
+
+    <hr>
+
+    <!-- Flash Messages Display -->
+   {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% set category, message = messages[0] %}
+         <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+      {% endif %}
+    {% endwith %}
+  
+    <div class="d-flex flex-wrap mb-4">
+      <button class="btn btn-success m-2" onclick="loadSection('available_quizzes')">Available Quizzes</button>
+      <button class="btn btn-primary m-2" onclick="loadSection('my_attempts')">My Quiz Attempts</button>
+      <button class="btn btn-info m-2" onclick="loadSection('completed_quizzes')">Completed Quizzes</button>
+      <button class="btn btn-warning m-2" onclick="loadSection('pending_quizzes')">Pending Quizzes</button>
+      <button class="btn btn-secondary m-2" onclick="loadSection('quiz_results')">View Results</button>
+      <button class="btn btn-outline-primary m-2" onclick="loadSection('join_quiz')">Join Quiz by Code</button>
+      <button class="btn btn-primary m-2" onclick="loadSection('update_profile_participant')">Update Profile</button>
+      <a href="{{ url_for('main.logout_method') }}" class="btn btn-danger m-2">Log Out</a>
+    </div>
+
+    <!-- Dynamic content area -->
+    <div id="content-area" class="mt-4 border rounded p-4">
+      <div class="text-center">
+        <h4>Welcome to Your Quiz Dashboard</h4>
+        <p class="text-muted">Select an action above to get started with quizzes.</p>
+        <div class="mt-4">
+          <i class="fas fa-quiz fa-3x text-primary mb-3"></i>
+          <p>Ready to test your knowledge? Choose from available quizzes or check your previous attempts.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden fields to store backend data -->
+  <input type="hidden" id="dashboard-participant-id" value="{{ participant.participant_id if participant else '' }}">
+  <input type="hidden" id="participant-email" value="{{ participant.participant_email if participant else '' }}">
+  
+  <input type="hidden" id="participant-preferred_subject_a" value="{{ participant.preferred_subject_a if participant else '' }}">
+  <input type="hidden" id="participant-preferred_subject_b" value="{{ participant.preferred_subject_b if participant else '' }}">
+  <input type="hidden" id="participant-preferred_subject_c" value="{{ participant.preferred_subject_c if participant else '' }}">
+  <input type="hidden" id="participant-preferred_subject_d" value="{{ participant.preferred_subject_d if participant else '' }}">
+
+  <!-- JavaScript to handle AJAX -->
+  <script>
+// Auto-hide flash messages after 2 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      const flashMessage = document.getElementById('flash-message');
+      if (flashMessage) {
+        setTimeout(function() {
+          flashMessage.classList.remove('show');
+          flashMessage.classList.add('fade');
+          setTimeout(function() {
+            flashMessage.remove();
+          }, 150); // Wait for fade animation to complete
+        }, 2000);
+      }
+    });
+
+    function loadSection(section) {
+  const participantId = document.getElementById('dashboard-participant-id').value;
+  const sub_a = document.getElementById('participant-preferred_subject_a').value;
+  const sub_b = document.getElementById('participant-preferred_subject_b').value;
+  const sub_c = document.getElementById('participant-preferred_subject_c').value;
+  const sub_d = document.getElementById('participant-preferred_subject_d').value;
+  
+  // Create subjects object
+  const subjects = {
+    preferred_subject_a: sub_a,
+    preferred_subject_b: sub_b,
+    preferred_subject_c: sub_c,
+    preferred_subject_d: sub_d
+  };
+  console.log('participantId:'+participantId);
+  fetch(`/participant/section/${participantId}/${section}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(subjects)
+  })
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('content-area').innerHTML = data;
+    })
+    .catch(error => {
+      console.error('Error loading section:', error);
+      document.getElementById('content-area').innerHTML = "<p class='text-danger'>Error loading content. Please try again.</p>";
+    });
+}
+
+
+    // Auto-refresh available quizzes every 30 seconds if that section is loaded
+    function autoRefreshQuizzes() {
+      const contentArea = document.getElementById('content-area');
+      if (contentArea.innerHTML.includes('Available Quizzes') || contentArea.innerHTML.includes('quiz-list')) {
+        loadSection('available_quizzes');
+      }
+    }
+
+    // Set up auto-refresh (optional)
+    // setInterval(autoRefreshQuizzes, 30000);
+  </script>
+  
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+</body>
+</html>

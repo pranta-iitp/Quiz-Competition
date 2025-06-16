@@ -18,50 +18,13 @@ def home():
 @app.route('/logout')
 def logout_method():
     session.clear()  # Clear all session data
-    flash('You have been logged out.', 'success')
+    flash('You have been logged out1.', 'success')
     return redirect(url_for('home'))  # Redirect to home page
 
 @app.route("/create_quiz")
 def create_quiz():
     return render_template('index.html')
 
-
-"""=====================quiz code starts==================="""
-
-@app.route('/update_quiz_status/<quiz_id>/<author_id>', methods=['POST'])
-def update_quiz_status(quiz_id,author_id):
-    if 'user_id' not in session:
-        flash("You must be logged in.")
-        return redirect(url_for('sign_in'))
-
-    quiz = Quizzes.query.filter_by(quiz_id=quiz_id).first()
-    if not quiz:
-        flash("Quiz not found.")
-        return redirect(url_for('all_quizzes'))
-
-    new_status = request.form.get('quiz_status')
-    new_status = new_status.lower()
-    int_new_status = 0
-    if(new_status == 'active'):
-        int_new_status = 1
-    elif(new_status == 'inactive'):
-        int_new_status = 2
-    elif(new_status == 'archived'):
-        int_new_status = 3
-    
-    if int_new_status in [1,2,3]:
-        quiz.quiz_status = int_new_status
-        db.session.commit()
-        flash(f"Quiz status updated to {int_new_status}.", "success")
-    else:
-        flash("Invalid status value.", "error")
-    # author = Authors.query.filter_by(author_id=author_id).first()
-    # quizzes = Quizzes.query.filter_by(quiz_author_id=author.author_user_id).all()
-    return redirect(url_for('load_author_dashboard'))
-
-
-
-"""=====================quiz code ends==================="""
 
 """=====================author code starts==================="""
 
@@ -78,7 +41,7 @@ def active_quizzes():
         Quizzes.quiz_author_id == author.author_user_id,
         cast(Quizzes.quiz_status, Integer) == 2
     ).all()
-    return render_template('author_pages/active_quizzes.html', quizzes=quizzes, author=author)
+    return render_template('author/active_quizzes.html', quizzes=quizzes, author=author)
 
 
 # inactive
@@ -94,7 +57,7 @@ def inactive_quizzes():
         Quizzes.quiz_author_id == author.author_user_id,
         Quizzes.quiz_status == 2
     ).all()
-    return render_template('author_pages/inactive_quizzes.html', quizzes=quizzes)
+    return render_template('author/inactive_quizzes.html', quizzes=quizzes)
 
 @app.route('/all_quizzes', methods=['GET', 'POST'])
 def all_quizzes():
@@ -106,77 +69,10 @@ def all_quizzes():
     print("all******",author)
     if not author:
         flash("Author profile not found.")
-        return redirect(url_for('load_author_dashboard'))
+        return redirect(url_for('load_author.dashboard'))
 
     quizzes = Quizzes.query.filter_by(quiz_author_id=author.author_user_id).all()
-    return render_template('author_pages/all_quizzes.html', quizzes=quizzes,author=author)
-
-# @app.route('/new_quiz_attr', methods=['GET', 'POST'])
-# def new_quiz_attr():
-#     if 'user_id' not in session:
-#         flash("You must be logged in as author.")
-#         return redirect(url_for('sign_in'))
-
-#     user_id = session['user_id']
-#     author = Authors.query.filter_by(author_user_id=user_id).first()
-
-#     if request.method == 'POST':
-#         quiz_title = request.form['quiz_title']
-#         """
-#         # Check if a quiz with the same title already exists for the author
-#         existing_quiz = Quizzes.query.filter_by(quiz_title=quiz_title, quiz_author_id=author.author_user_id).first()
-#         if existing_quiz:
-#             flash("A quiz with this title already exists. Please choose a new title.", "error")
-#             return redirect(url_for('new_quiz_attr'))
-#         """
-#         quiz_id = generate_user_id()
-#         #quiz_title = request.form['quiz_title']
-#         quiz_subject = request.form['quiz_subject']
-#         quiz_author_id = request.form['quiz_author_id']
-#         quiz_subject = request.form['quiz_subject']
-#         quiz_num_questions = request.form['quiz_num_questions']
-#         quiz_marks_per_question = request.form['quiz_marks_per_question']
-#         quiz_negative_marks = request.form['quiz_negative_marks']
-#         # Create quiz 
-#         quiz = Quizzes(
-#             quiz_id=quiz_id,
-#             quiz_title=quiz_title,
-#             quiz_subject=quiz_subject,
-#             quiz_author_id = author.author_user_id,
-#             quiz_num_questions = quiz_num_questions,
-#             quiz_marks_per_question = quiz_marks_per_question,
-#             quiz_negative_marks = quiz_negative_marks,
-#             quiz_status = 3,
-#             created_at = None
-#         )
-#         db.session.add(quiz)
-#         db.session.commit()
-
-#         # questions creations code starts
-#         for quiz_question in range(int(quiz_num_questions)):
-#             question_id = generate_user_id()
-#             new_question = Questions(
-#                 question_id=question_id,
-#                 question_quiz_id=quiz_id,
-#                 question_author_id=user_id,
-#                 question_question_text=None,
-#                 question_option_a=None,
-#                 question_option_b=None,
-#                 question_option_c=None,
-#                 question_option_d=None,
-#                 question_correct_option=None,
-#                 question_mark = float(quiz_marks_per_question),
-#                 question_negative_mark = float(quiz_negative_marks),
-#                 questions_attempted =0,
-#                 questions_attempted_correct=0
-#             )
-#             db.session.add(new_question)
-#             db.session.commit()
-
-#         return redirect(url_for('load_author_dashboard'))
-#     print("author",author)
-#     return render_template('author_pages/update_author_profile.html', author=author)
-#     #return redirect(url_for('load_author_dashboard'))
+    return render_template('author/all_quizzes.html', quizzes=quizzes,author=author)
 
 
 @app.route('/new_quiz_attr', methods=['GET', 'POST'])
@@ -184,7 +80,7 @@ def new_quiz_attr():
     if 'user_id' not in session:
         flash("You must be logged in as author.")
         return redirect(url_for('sign_in'))
-
+    print("entry")
     user_id = session['user_id']
     author = Authors.query.filter_by(author_user_id=user_id).first()
 
@@ -210,15 +106,20 @@ def new_quiz_attr():
                 quiz_title=quiz_title,
                 quiz_subject=quiz_subject,
                 quiz_author_id=author.author_user_id,
+                quiz_author_name = author.author_name,
                 quiz_num_questions=quiz_num_questions,
                 quiz_marks_per_question=quiz_marks_per_question,
                 quiz_negative_marks=quiz_negative_marks,
                 quiz_status=3,
-                created_at=None
+                created_at=None,
+                quiz_duration=60,  # Default duration in minutes
+                quiz_start_time=None,  # Set to None or a specific start time
+                quiz_end_time=None,  # Set to None or a specific end time
+                allow_multiple_attempts=False  # Default value
             )
             db.session.add(quiz)
 
-            # Create blank questions
+            # Create question
             for _ in range(int(quiz_num_questions)):
                 question_id = generate_user_id()
                 new_question = Questions(
@@ -239,8 +140,9 @@ def new_quiz_attr():
                 db.session.add(new_question)
 
             db.session.commit()
-            flash("Quiz created successfully!", "success")
-            return redirect(url_for('load_author_dashboard'))
+            flash("Quiz information submitted successfully", "success")
+            print("success")
+            return redirect(url_for('author.dashboard'))
 
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -255,7 +157,7 @@ def new_quiz_attr():
             return redirect(url_for('new_quiz_attr'))
 
     # For GET request
-    return render_template('author_pages/new_quiz_attr.html', author=author)
+    return render_template('author/author.dashboard.html', author=author)
 
 
 @app.route('/update_profile_author', methods=['GET', 'POST'])
@@ -276,9 +178,9 @@ def update_profile_author():
         author.author_subject_d = request.form['author_subject_d']
         db.session.commit()
         flash('Profile updated successfully!', 'success')
-        return redirect(url_for('load_author_dashboard'))
+        return redirect(url_for('load_author.dashboard'))
     print("author",author)
-    return render_template('author_pages/update_author_profile.html', author=author)
+    return render_template('author/update_author_profile.html', author=author)
 
 # author single page application code
 @app.route('/author/section/<string:section_name>')
@@ -286,28 +188,28 @@ def load_author_section(section_name):
     if section_name == 'new_quiz':
         user_id = session.get('user_id')
         user = Authors.query.filter_by(author_user_id=user_id).first()
-        return render_template('author_pages/new_quiz_attr.html', author=user)
+        return render_template('author/new_quiz_attr.html', author=user)
     elif section_name == 'all_quizzes':
         user_id = session.get('user_id')
         author = Authors.query.filter_by(author_user_id=user_id).first()
         quizzes = Quizzes.query.filter_by(quiz_author_id=author.author_user_id).all()
-        return render_template('author_pages/all_quizzes.html',author=author,quizzes=quizzes)
+        return render_template('author/all_quizzes.html',author=author,quizzes=quizzes)
     elif section_name == 'active_quizzes':
         user_id = session.get('user_id')
         author = Authors.query.filter_by(author_user_id=user_id).first()
         quizzes = Quizzes.query.filter_by(quiz_author_id=author.author_user_id).all()
-        return render_template('author_pages/active_quizzes.html',author=author,quizzes=quizzes)
+        return render_template('author/active_quizzes.html',author=author,quizzes=quizzes)
     elif section_name == 'inactive_quizzes':
         user_id = session.get('user_id')
         author = Authors.query.filter_by(author_user_id=user_id).first()
         quizzes = Quizzes.query.filter_by(quiz_author_id=author.author_user_id).all()
-        return render_template('author_pages/inactive_quizzes.html',author=author,quizzes=quizzes)
+        return render_template('author/inactive_quizzes.html',author=author,quizzes=quizzes)
     elif section_name == 'archived_quizzes':
-        return render_template('author_pages/archived_quizzes.html')
+        return render_template('author/archived_quizzes.html')
     elif section_name == 'update_profile_author':
         user_id = session.get('user_id')
         user = Authors.query.filter_by(author_user_id=user_id).first()
-        return render_template('author_pages/update_author_profile.html', author=user)
+        return render_template('author/update_author_profile.html', author=user)
     return "<p>Invalid section</p>"
 
 """============================author code ends===================="""
@@ -372,7 +274,7 @@ def submit_sign_in():
             elif user.user_role == 'superuser':
                 return redirect(url_for('superuser_dashboard'))
             elif user.user_role == 'author':
-                return redirect(url_for('load_author_dashboard'))
+                return redirect(url_for('author.dashboard'))
             elif user.user_role == 'participant':
                 return redirect(url_for('participant_dashboard'))
             else:
@@ -402,7 +304,7 @@ def load_author_dashboard():
     user = Users.query.get(session['user_id'])
     quizzes = Quizzes.query.filter_by(quiz_author_id=user.user_id).all()
 
-    return render_template('author_dashboard.html',
+    return render_template('author.dashboard.html',
                            author=user,
                            quizzes=quizzes)  # 👈 My Quizzes is default
 

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results - {{ quiz.quiz_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>
+        .result-card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto;
+        }
+        .excellent { background: linear-gradient(45deg, #28a745, #20c997); }
+        .good { background: linear-gradient(45deg, #17a2b8, #6f42c1); }
+        .average { background: linear-gradient(45deg, #ffc107, #fd7e14); }
+        .poor { background: linear-gradient(45deg, #dc3545, #e83e8c); }
+        .stats-card {
+            border-left: 4px solid;
+            padding-left: 20px;
+        }
+        .correct { border-left-color: #28a745; }
+        .wrong { border-left-color: #dc3545; }
+        .unanswered { border-left-color: #6c757d; }
+        .total { border-left-color: #007bff; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-body text-center">
+                        <h1 class="card-title text-primary">🎉 Quiz Completed!</h1>
+                        <h3 class="text-muted">{{ quiz.quiz_title }}</h3>
+                        <p class="text-secondary">Subject: {{ quiz.quiz_subject }}</p>
+                        <p class="text-secondary">Author: dummy</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score Overview -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card result-card h-100">
+                    <div class="card-body text-center">
+                        <h4 class="card-title">Your Score</h4>
+                        <div class="score-circle {{ score_class }} mb-3">
+                            {{ attempt.attempt_score }}/{{ attempt.attempt_total_marks }}
+                        </div>
+                        <h5>{{ percentage }}%</h5>
+                        <p class="text-muted">{{ performance_message }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- <div class="col-md-6">
+                <div class="card result-card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title text-center mb-4">Quiz Statistics</h4>
+                        
+                        <div class="stats-card correct mb-3">
+                            <h5 class="text-success">✓ Correct Answers</h5>
+                            <h3>{{ attempt.attempt_correct_answers or 0 }}</h3>
+                        </div>
+                        
+                        <div class="stats-card wrong mb-3">
+                            <h5 class="text-danger">✗ Wrong Answers</h5>
+                            <h3>{{ attempt.attempt_wrong_answers }}</h3>
+                        </div>
+                        
+                        <div class="stats-card unanswered mb-3">
+                            <h5 class="text-secondary">○ Unanswered</h5>
+                            <h3>{{ attempt.attempt_unanswered_questions }}</h3>
+                        </div>
+                        
+                        <div class="stats-card total">
+                            <h5 class="text-primary">📊 Total Questions</h5>
+                            <h3>{{ quiz.quiz_num_questions }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+            <div class="col-md-6">
+    <h4>Quiz Attempt Statistics</h4>
+    
+    <!-- Attempt Selection Buttons -->
+    <div class="attempt-buttons mb-3">
+        <div class="btn-group" role="group" aria-label="Attempt Selection">
+            <!-- These buttons will be dynamically generated -->
+            <div id="attempt-buttons-container">
+                <!-- Buttons will be loaded here via JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Display Section -->
+    <div class="stats-table" id="stats-container">
+        <div id="loading-spinner" class="text-center" style="display: none;">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        
+        <table class="table table-bordered" id="stats-table" style="display: none;">
+            <tr>
+                <td><strong>Attempt Number</strong></td>
+                <td id="attempt-num">-</td>
+            </tr>
+            <tr>
+                <td><strong>Status</strong></td>
+                <td id="attempt-status">-</td>
+            </tr>
+            <tr>
+                <td><strong>Time Taken</strong></td>
+                <td id="time-taken">-</td>
+            </tr>
+            <tr>
+                <td><strong>Score</strong></td>
+                <td id="score">-</td>
+            </tr>
+            <tr>
+                <td><strong>Percentage</strong></td>
+                <td id="percentage">-</td>
+            </tr>
+            <tr class="table-success">
+                <td><strong>Correct Answers</strong></td>
+                <td id="correct-answers">-</td>
+            </tr>
+            <tr class="table-danger">
+                <td><strong>Wrong Answers</strong></td>
+                <td id="wrong-answers">-</td>
+            </tr>
+            <tr class="table-warning">
+                <td><strong>Unanswered Questions</strong></td>
+                <td id="unanswered-questions">-</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+        </div>
+
+        <!-- Time and Attempt Details -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card result-card">
+                    <div class="card-body">
+                        <h5 class="card-title">⏱️ Time Details</h5>
+                        <p><strong>Started:</strong> {{ attempt.attempt_start_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        <p><strong>Completed:</strong> {{ attempt.attempt_end_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        <!-- duration is stored as integer in DB-->
+                        <p><strong>Duration:</strong> {{ attempt.attempt_quiz_time_taken|format_duration }}</p>
+                        <p><strong>Quiz Duration:</strong> {{ quiz.quiz_duration }} minutes</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card result-card">
+                    <div class="card-body">
+                        <h5 class="card-title">📋 Quiz Information</h5>
+                        <p><strong>Marks per Question:</strong> {{ quiz.quiz_marks_per_question }}</p>
+                        <p><strong>Negative Marks:</strong> {{ quiz.quiz_negative_marks }}</p>
+                        <p><strong>Total Possible Score:</strong> {{ quiz.quiz_num_questions * quiz.quiz_marks_per_question }}</p>
+                        <p><strong>Attempt Status:</strong> 
+                            <span class="badge bg-success">{{ attempt.attempt_status }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Question Review -->
+        {% if show_detailed_review %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card result-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">📝 Question Review(latest attempt)</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for answer, question in participant_answers %}
+                        <div class="mb-3 p-3 border rounded">
+                            <h6>Question {{ loop.index }}:</h6>
+                            <p>{{ question.question_question_text }}</p>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Your Answer:</strong> 
+                                        {% if answer.participant_answer_selected_option %}
+                                            <span class="badge {% if answer.participant_answer_correct_answer %}bg-success{% else %}bg-danger{% endif %}">
+                                                Option {{ answer.participant_answer_selected_option }}
+                                            </span>
+                                            <span class="badge {% if answer.participant_answer_correct_answer %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ answer.participant_answer_selected_answer }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Answered</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Correct Answer:</strong> 
+                                        <span class="badge bg-success">Option {{ question.question_correct_option }}</span>
+                                        <span class="badge bg-success"> {{ question.question_correct_answer }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <a href="{{ url_for('participant.dashboard') }}" class="btn btn-primary btn-lg me-3">
+                    🏠 Back to Dashboard
+                </a>
+                
+                {% if quiz.allow_multiple_attempts %}
+                <a href="{{ url_for('participant.take_quiz', quiz_id=quiz.quiz_id) }}" class="btn btn-outline-primary btn-lg me-3">
+                    🔄 Retake Quiz
+                </a>
+                {% endif %}
+                
+                <button onclick="window.print()" class="btn btn-outline-secondary btn-lg">
+                    🖨️ Print Results
+                </button>
+            </div>
+        </div>
+    </div>
+<input type="hidden" id="participant_id" name="participant_id" value="{{participant_id}}">
+<input type="hidden" id="quiz_id" name="quiz_id" value="{{quiz.quiz_id}}">
+
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    
+<script src="{{ url_for('static', filename='js/attempt_stats.js') }}"></script>
+
+</body>
+</html>

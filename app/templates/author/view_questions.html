@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Quiz Questions - {{ quiz.quiz_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>
+        .question-card {
+            border-left: 4px solid #007bff;
+            transition: all 0.3s ease;
+        }
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .correct-answer {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .quiz-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .option-label {
+            font-weight: 500;
+        }
+        .option-value {
+            padding-left: 10px;
+        }
+        .status-badge {
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="quiz-header text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-eye me-3"></i>{{ quiz.quiz_title }}
+            </h1>
+            <p class="lead mb-0">Subject: {{ quiz.quiz_subject }} | Total Questions: {{ quiz.quiz_num_questions }}</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav>
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{ url_for('author.dashboard') }}" class="text-decoration-none">
+                                <i class="fas fa-home me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">View Questions</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Questions (Read-Only) -->
+        <div class="row">
+            {% for question in questions %}
+            <div class="col-lg-6 mb-4">
+                <div class="card question-card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-question-circle me-2"></i>
+                            Question {{ loop.index }}
+                            {% if question.question_question_text %}
+                                <span class="badge bg-success ms-2 status-badge">
+                                    <i class="fas fa-check"></i> Saved
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning ms-2 status-badge">
+                                    <i class="fas fa-clock"></i> Not Saved
+                                </span>
+                            {% endif %}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Question Text -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-edit me-1"></i>Question Text
+                            </label>
+                            <div class="form-control bg-light" readonly style="min-height:60px;">
+                                {{ question.question_question_text or '-' }}
+                            </div>
+                        </div>
+                        <!-- Options -->
+                        <div class="mb-3">
+                            <div><span class="option-label">Option A:</span> <span class="option-value">{{ question.question_option_a or '-' }}</span></div>
+                            <div><span class="option-label">Option B:</span> <span class="option-value">{{ question.question_option_b or '-' }}</span></div>
+                            <div><span class="option-label">Option C:</span> <span class="option-value">{{ question.question_option_c or '-' }}</span></div>
+                            <div><span class="option-label">Option D:</span> <span class="option-value">{{ question.question_option_d or '-' }}</span></div>
+                        </div>
+                        <!-- Correct Answer -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-success">
+                                <i class="fas fa-check-circle me-1"></i>Correct Answer
+                            </label>
+                            <div class="form-control correct-answer" readonly>
+                                {% if question.question_correct_option %}
+                                    Option {{ question.question_correct_option }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Question Info -->
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-plus-circle me-1"></i>
+                                    Marks: <strong>{{ question.question_mark }}</strong>
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-minus-circle me-1"></i>
+                                    Negative: <strong>{{ question.question_negative_mark }}</strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Back Button -->
+        <div class="row mt-4">
+            <div class="col text-center">
+                <a href="{{ url_for('author.dashboard') }}" class="btn btn-secondary btn-lg me-3">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and FontAwesome -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</body>
+</html>

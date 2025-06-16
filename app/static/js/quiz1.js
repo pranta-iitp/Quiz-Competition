@@ -1,17 +1,86 @@
-// quiz.js - Modified for JSON submission
-
-// Get total questions from hidden input
-const totalQuestions = parseInt(document.getElementById('total-questions').value, 10);
+// quiz.js (Simplified)
+// Global state
+let totalQuestions = 0;  // Initialize as 0
 let currentQuestion = 1;
 let answeredQuestions = new Set();
-let timeRemaining = 2700; // 45 minutes in seconds
+let timeRemaining = 0;   // Initialize as 0
 let quizTimer = null;
+let quizAnswers = {};
 
-// Store answers in memory for JSON submission
-let quizAnswers = {}; //global
+// Function to disable all buttons except start quiz button
+function disableAllButtonsExceptStart() {
+    // Disable navigation buttons
+    var prevBtn = document.getElementById('prev-btn');
+    var nextBtn = document.getElementById('next-btn');
+    var submitBtn = document.getElementById('submit-btn');
+    
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
+    
+    // Disable question navigation buttons
+    var questionNavBtns = document.querySelectorAll('.question-nav-btn');
+    for (var i = 0; i < questionNavBtns.length; i++) {
+        questionNavBtns[i].disabled = true;
+    }
+    
+    // Disable clear selection buttons
+    var clearBtns = document.querySelectorAll('[onclick*="clearSelection"]');
+    for (var i = 0; i < clearBtns.length; i++) {
+        clearBtns[i].disabled = true;
+    }
+    
+    // Disable all radio buttons
+    var radioButtons = document.querySelectorAll('input[type="radio"]');
+    for (var i = 0; i < radioButtons.length; i++) {
+        radioButtons[i].disabled = true;
+    }
+}
+// Function to enable all quiz buttons
+function enableAllQuizButtons() {
+    // Enable navigation buttons (they'll be managed by existing logic)
+    var prevBtn = document.getElementById('prev-btn');
+    var nextBtn = document.getElementById('next-btn');
+    var submitBtn = document.getElementById('submit-btn');
+    
+    if (prevBtn) prevBtn.disabled = false;
+    if (nextBtn) nextBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = false;
+    
+    // Enable question navigation buttons
+    var questionNavBtns = document.querySelectorAll('.question-nav-btn');
+    for (var i = 0; i < questionNavBtns.length; i++) {
+        questionNavBtns[i].disabled = false;
+    }
+    
+    // Enable clear selection buttons
+    var clearBtns = document.querySelectorAll('[onclick*="clearSelection"]');
+    for (var i = 0; i < clearBtns.length; i++) {
+        clearBtns[i].disabled = false;
+    }
+    
+    // Enable all radio buttons
+    var radioButtons = document.querySelectorAll('input[type="radio"]');
+    for (var i = 0; i < radioButtons.length; i++) {
+        radioButtons[i].disabled = false;
+    }
+}
 
-// Auto-hide flash messages
+
+
 document.addEventListener('DOMContentLoaded', function() {
+
+     // Initialize values after DOM is ready
+     totalQuestions = parseInt(document.getElementById('total-questions').value, 10);
+     timeRemaining = parseInt(document.getElementById('quiz-duration').value, 10);
+    
+    // Hide timer initially
+    const timerSection = document.getElementById('timer-section');
+    if (timerSection) {
+        timerSection.style.display = 'none';
+    }
+
+    disableAllButtonsExceptStart();
     const flashMessage = document.getElementById('flash-message');
     if (flashMessage) {
         setTimeout(function() {
@@ -23,63 +92,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000);
     }
 
+// Fixed: Use correct IDs from HTML
+    const startButton = document.getElementById('start-quiz-btn');
+    if (startButton) {
+        startButton.addEventListener('click', function () {
+            const quizContent = document.getElementById('quiz-content'); // Correct ID
+            const startWrapper = document.getElementById('start-quiz-wrapper'); // Correct ID
+            const timerSection = document.getElementById('timer-section');
+
+            // Hide the start button wrapper and show the quiz content
+            if (startWrapper) startWrapper.style.display = 'none';
+            if (quizContent) quizContent.style.display = 'block';
+            if (timerSection) timerSection.style.display = 'block';
+
+            showQuestion(1);  // Show first question
+            updateProgressBar();
+            startTimer();     // Start the timer
+            enableAllQuizButtons();
+            quizStartTime = new Date();
+            
+            // Set the start time in the hidden field
+            const startTimeField = document.getElementById('quiz-start-time');
+            if (startTimeField) {
+                startTimeField.value = quizStartTime.toISOString();
+            }
+        });
+    }
+
     updateQuestionNavigation();
     updateProgressBar();
-    startTimer();
+    //startTimer();
     
     // Add event delegation for radio buttons as backup
     setupRadioEventHandlers();
 });
 
-// Setup event delegation for radio buttons
+
+// Handle radio button changes
 function setupRadioEventHandlers() {
     document.addEventListener('change', function(event) {
         if (event.target.type === 'radio' && event.target.name.startsWith('question_')) {
             const questionId = event.target.name.replace('question_', '');
-            const questionCard = event.target.closest('.question-card');
-            
-            if (questionCard) {
-                const questionNumMatch = questionCard.id.match(/question-(\d+)/);
-                if (questionNumMatch) {
-                    const questionNum = parseInt(questionNumMatch[1]);
-                    console.log('Event delegation triggered for:', questionNum, questionId);
-                    
-                    // Call the update function directly
-                    handleAnswerUpdate(questionNum, parseInt(questionId), event.target.value);
-                }
-            }
+            const selectedValue = event.target.value;
+            quizAnswers[questionId] = {
+                question_id: questionId,
+                selected_option: selectedValue,
+                timestamp: new Date().toISOString()
+            };
+            answeredQuestions.add(parseInt(questionId));
+            updateProgressBar();
+            autoSaveAnswer(questionId);
         }
     });
 }
 
-// Direct answer update handler
-function handleAnswerUpdate(questionNum, questionId, selectedValue) {
-    console.log('handleAnswerUpdate called with:', questionNum, questionId, selectedValue);
-    
-    quizAnswers[questionId] = {
-        question_id: questionId,
-        selected_option: selectedValue,
-        timestamp: new Date().toISOString()
+// Auto-save answer for a question
+function autoSaveAnswer(questionId) {
+    const quizId = document.getElementById('quiz-id').value;
+    const participantId = document.getElementById('participant-id').value;
+    const answerData = {
+        quiz_id: quizId,
+        participant_id: participantId,
+        answer: quizAnswers[questionId]
     };
-
-    console.log('Answer stored via event delegation:', quizAnswers[questionId]);
-
-    answeredQuestions.add(questionNum);
-    updateProgressBar();
-    updateQuestionGrid();
-
-    // Update visual styling
-    const selectedRadio = document.querySelector(`input[name="question_${questionId}"][value="${selectedValue}"]`);
-    if (selectedRadio) {
-        const selectedLabel = selectedRadio.closest('.option-label');
-        if (selectedLabel) {
-            const allOptions = selectedLabel.parentElement.querySelectorAll('.option-label');
-            allOptions.forEach(opt => opt.classList.remove('selected-option'));
-            selectedLabel.classList.add('selected-option');
+    fetch(`/quiz/auto-save/${quizId}/${participantId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(answerData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Auto-save successful!');
+        } else {
+            console.error('Auto-save error:', data.error || data.message);
         }
-    }
-
-    autoSaveAnswer(questionId);
+    })
+    .catch(error => console.log('Auto-save failed:', error));
 }
 
 // Timer functions
@@ -204,59 +293,6 @@ function updateAnswerStatus(questionId) {
 
 
 
-function updateAnswerStatus1(questionNum, questionId) {
-    console.log('updateAnswerStatus called with:', questionNum, questionId);
-    
-    // Multiple attempts to find the selected option with different delays
-    function checkForSelection(attempt = 0) {
-        const selector = `input[name="question_${questionId}"]:checked`;
-        //document.querySelector(`input[name="question_${questionId}"][value="${selectedValue}"]`);
-        const selectedOption = document.querySelector(selector);
-        
-        console.log(`Attempt ${attempt + 1}: Selected option:`, selectedOption);
-
-        if (selectedOption) {
-            quizAnswers[questionId] = {
-                question_id: questionId,
-                selected_option: selectedOption.value,
-                timestamp: new Date().toISOString()
-            };
-
-            console.log('Answer stored:', quizAnswers[questionId]);
-
-            answeredQuestions.add(questionNum);
-            updateProgressBar();
-            updateQuestionGrid();
-
-            // Update visual styling
-            const selectedLabel = selectedOption.closest('.option-label');
-            if (selectedLabel) {
-                const allOptions = selectedLabel.parentElement.querySelectorAll('.option-label');
-                allOptions.forEach(opt => opt.classList.remove('selected-option'));
-                selectedLabel.classList.add('selected-option');
-            }
-
-            autoSaveAnswer(questionId);
-        } else {
-            // Try again with longer delay, up to 3 attempts
-            if (attempt < 2) {
-                console.log(`Retrying selection detection for question ${questionId}, attempt ${attempt + 2}`);
-                setTimeout(() => checkForSelection(attempt + 1), (attempt + 1) * 50);
-            } else {
-                console.warn(`Failed to detect selection for question ID ${questionId} after 3 attempts`);
-                // Debug: log all radio buttons for this question
-                const allRadios = document.querySelectorAll(`input[name="question_${questionId}"]`);
-                console.log('All radios for this question:', allRadios);
-                allRadios.forEach((radio, index) => {
-                    console.log(`Radio ${index}: value=${radio.value}, checked=${radio.checked}, id=${radio.id}`);
-                });
-            }
-        }
-    }
-    
-    // Start checking immediately, then with small delays if needed
-    checkForSelection();
-}
 
 function clearSelection(questionId, questionNum) {
     console.log('clearSelection called for:', questionId, questionNum);
@@ -324,14 +360,18 @@ function submitQuiz() {
     const quizId = quizIdElement.value;
     const participantId = participantIdElement.value;
     
+    const submitTime = new Date();
+    const timeTakenSeconds = Math.floor((submitTime - quizStartTime) / 1000); // difference in seconds
+
     const submitData = {
         quiz_id: parseInt(quizId),
         participant_id: parseInt(participantId),
         answers: Object.values(quizAnswers),
-        submit_time: new Date().toISOString(),
-        time_taken: 2700 - timeRemaining // Time taken in seconds
+        start_time: quizStartTime ? quizStartTime.toISOString() : null,
+        submit_time: submitTime.toISOString(),
+        time_taken: timeTakenSeconds
     };
-    
+
     console.log('Submitting quiz data:', submitData);
     
     // Submit via fetch API

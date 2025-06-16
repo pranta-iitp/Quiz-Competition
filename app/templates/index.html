@@ -26,10 +26,18 @@
       <li class="nav-item"><a class="nav-link" href="#">Participants</a></li>
       <li class="nav-item"><a class="nav-link" href="#">Contact</a></li>
     </ul>
-    <a href="{{ url_for('sign_in') }}" class="btn btn-primary ms-3">Sign In</a>
+    <a href="{{ url_for('auth.sign_in') }}" class="btn btn-primary ms-3">Sign In</a>
   </div>
 </nav>
-
+ {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% set category, message = messages[0] %}
+         <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+      {% endif %}
+    {% endwith %}
 <!-- Carousel -->
 <div id="carouselExample" class="carousel slide" data-bs-ride="carousel">
   <div class="carousel-indicators">
@@ -77,9 +85,9 @@
     QuizCompete is your one-stop platform for fun, learning, and competition! Whether you're an author eager to share your knowledge or a participant ready to test your skills, you've come to the right place.
   </p>
   <div class="mt-4">
-    <a href="{{ url_for('register_author') }}" class="btn btn-primary btn-lg mx-2">Sign Up as Author</a>
-    <a href="{{ url_for('register_participant') }}" class="btn btn-success btn-lg mx-2">Join as Participant</a>
-    <!-- <a href="{{ url_for('sign_in') }}" class="btn btn-outline-secondary btn-lg mx-2">Sign In</a> -->
+    <a href="{{ url_for('auth.register_author') }}" class="btn btn-primary btn-lg mx-2">Sign Up as Author</a>
+    <a href="{{ url_for('auth.register_participant') }}" class="btn btn-success btn-lg mx-2">Join as Participant</a>
+    <!-- <a href="{{ url_for('auth.sign_in') }}" class="btn btn-outline-secondary btn-lg mx-2">Sign In</a> -->
   </div>
 </section>
 

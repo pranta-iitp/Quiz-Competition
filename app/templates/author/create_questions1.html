@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Quiz Questions - {{ quiz.quiz_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <!-- Bootstrap CSS (local or CDN as per your setup) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>
+
+         /* Styles scoped only to second modal's modal-body */
+  #finalConfirmModal .modal-body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9fafd;
+    padding: 20px 25px;
+    border-radius: 8px;
+    color: #333;
+    line-height: 1.6;
+  }
+  #finalConfirmModal .modal-body ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  #finalConfirmModal .modal-body ul li {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #444;
+  }
+  #finalConfirmModal .modal-body ul li::before {
+    content: "✔";
+    position: absolute;
+    left: 0;
+    top: 2px;
+
+}
+        .question-card {
+            border-left: 4px solid #007bff;
+            transition: all 0.3s ease;
+        }
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .correct-answer {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .progress-container {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .btn-save {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+        }
+        .quiz-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .option-input {
+            border-left: 3px solid #dee2e6;
+            transition: border-color 0.3s ease;
+        }
+        .option-input:focus {
+            border-left-color: #007bff;
+            box-shadow: -2px 0 0 rgba(0,123,255,0.25);
+        }
+
+
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="quiz-header text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-pencil-alt me-3"></i>{{ quiz.quiz_title }}
+            </h1>
+            <p class="lead mb-0">Subject: {{ quiz.quiz_subject }} | Total Questions: {{ quiz.quiz_num_questions }}</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="mb-2">Quiz Creation Progress</h5>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             style="width: {{ (questions|selectattr('question_question_text')|list|length / quiz.quiz_num_questions * 100)|round }}%">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <h4 class="mb-0">
+                        {{ questions|selectattr('question_question_text')|list|length }} / {{ quiz.quiz_num_questions }}
+                    </h4>
+                    <small>Questions Completed</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="row mb-4">
+            <div class="col">
+                <nav>
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{ url_for('author.dashboard') }}" class="text-decoration-none">
+                                <i class="fas fa-home me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">Create Questions</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Questions -->
+        <div class="row">
+            {% for question in questions %}
+            <div class="col-lg-6 mb-4">
+                <div class="card question-card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-question-circle me-2"></i>
+                            Question {{ loop.index }}
+                            {% if question.question_question_text %}
+                                <span class="badge bg-success ms-2">
+                                    <i class="fas fa-check"></i> Complete
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning ms-2">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
+                            {% endif %}
+                        </h6>
+                    </div>
+                    
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('quiz.save_question', quiz_id=quiz.quiz_id,question_id = question.question_id,author_id=author.author_user_id) }}">
+                            <input type="hidden" name="question_id" value="{{ question.question_id }}">
+                            
+                            <!-- Question Text -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-edit me-1"></i>Question Text
+                                </label>
+                                <textarea class="form-control" 
+                                         name="question_text" 
+                                         rows="3" 
+                                         placeholder="Enter your question here..."
+                                         required>{{ question.question_question_text or '' }}</textarea>
+                            </div>
+
+                            <!-- Options -->
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-circle me-1 text-primary"></i>Option A
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control option-input" 
+                                           name="option_a" 
+                                           value="{{ question.question_option_a or '' }}"
+                                           placeholder="Option A" 
+                                           required>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-circle me-1 text-info"></i>Option B
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control option-input" 
+                                           name="option_b" 
+                                           value="{{ question.question_option_b or '' }}"
+                                           placeholder="Option B" 
+                                           required>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-circle me-1 text-warning"></i>Option C
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control option-input" 
+                                           name="option_c" 
+                                           value="{{ question.question_option_c or '' }}"
+                                           placeholder="Option C" 
+                                           required>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-circle me-1 text-danger"></i>Option D
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control option-input" 
+                                           name="option_d" 
+                                           value="{{ question.question_option_d or '' }}"
+                                           placeholder="Option D" 
+                                           required>
+                                </div>
+                            </div>
+
+                            <!-- Correct Answer -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-success">
+                                    <i class="fas fa-check-circle me-1"></i>Correct Answer
+                                </label>
+                                <select class="form-select correct-answer" name="correct_option" required>
+                                    <option value="">Select correct option</option>
+                                    <option value="A" {% if question.question_correct_option == 'A' %}selected{% endif %}>Option A</option>
+                                    <option value="B" {% if question.question_correct_option == 'B' %}selected{% endif %}>Option B</option>
+                                    <option value="C" {% if question.question_correct_option == 'C' %}selected{% endif %}>Option C</option>
+                                    <option value="D" {% if question.question_correct_option == 'D' %}selected{% endif %}>Option D</option>
+                                </select>
+                            </div>
+
+                            <!-- Question Info -->
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-plus-circle me-1"></i>
+                                        Marks: <strong>{{ question.question_mark }}</strong>
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-minus-circle me-1"></i>
+                                        Negative: <strong>{{ question.question_negative_mark }}</strong>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Save Button -->
+                            <button type="submit" class="btn btn-save text-white w-100">
+                                <i class="fas fa-save me-2"></i>Save Question {{ loop.index }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+            <div class="col text-center">
+                <a href="{{ url_for('author.dashboard') }}" class="btn btn-secondary btn-lg me-3">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+               <!-- Publish Quiz Button (triggers modal) -->
+<button type="button" class="btn btn-success btn-lg me-3" data-bs-toggle="modal" data-bs-target="#publishQuizModal">
+    Publish Quiz
+</button>
+<!-- Hidden fields to store backend data -->
+<input type="hidden" id="quiz-id" value="{{ quiz.quiz_id }}">
+<input type="hidden" id="author-id" value="{{ author.author_user_id }}">
+
+<!-- Quiz Summary Modal -->
+<div class="modal fade" id="publishQuizModal" tabindex="-1" aria-labelledby="publishQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="publishQuizModalLabel">Quiz Summary</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                
+            </div>
+            <div class="modal-body">
+                <div class="quiz-summary">
+                    <h5>Quiz Details</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <td><strong>Quiz Title:</strong></td>
+                            <td>{{ quiz.quiz_title }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Subject:</strong></td>
+                            <td>{{ quiz.quiz_subject }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Questions:</strong></td>
+                            <td>{{ quiz.quiz_num_questions }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Questions Prepared:</strong></td>
+                            <td>{{ questions | selectattr('question_question_text') | list | length }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Marks per Question:</strong></td>
+                            <td>{{ quiz.quiz_marks_per_question }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Negative Marks:</strong></td>
+                            <td>{{ quiz.quiz_negative_marks }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Duration:</strong></td>
+                            <td>{{ quiz.quiz_duration }} minutes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Quiz Status:</strong></td>
+                            <td>
+                                {% if questions | selectattr('question_question_text') | list | length == quiz.quiz_num_questions %}
+                                    <span class="badge badge-success">Ready to Publish</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Incomplete</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <!-- Progress Bar -->
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             style="width: {{ ((questions | selectattr('question_question_text') | list | length) / quiz.quiz_num_questions * 100 if quiz.quiz_num_questions else 0) | round }}%;">
+                            {{ ((questions | selectattr('question_question_text') | list | length) / quiz.quiz_num_questions * 100 if quiz.quiz_num_questions else 0) | round }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button> -->
+                <button type="button" class="btn btn-success" id="confirmPublishBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Final Submission Modal -->
+<div class="modal fade" id="finalConfirmModal" tabindex="-1" aria-labelledby="finalConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Final Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul>
+      <li>Are you sure you want to publish this quiz? This action cannot be undone.</li>
+      <li>After final submission, yet the status will be <strong>Inactive</strong>.</li>
+      <li>You will be redirected to dashboard page. There you have to change status manually.</li>
+    </ul>
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="finalConfirmBtn">Confirm Publish</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+            </div>
+        </div>
+    </div>
+
+     <!-- Bootstrap JS (local or CDN as per your setup) -->
+      
+   <!-- Replace your jQuery line with this CDN -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/publish.js') }}"></script>
+
+
+</body>
+</html>

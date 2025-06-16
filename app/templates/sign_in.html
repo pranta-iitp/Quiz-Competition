@@ -1,28 +1,108 @@
-<!-- app/templates/sign-in.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Sign In</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Flash Messages Modal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 </head>
 <body class="container mt-5">
-  <h2>Sign In</h2>
-  <form method="POST" action="{{ url_for('submit_sign_in') }}">
-    <!-- <div class="form-group">
-      <label for="username">Username:</label>
-      <input type="text" name="username" class="form-control" required>
-    </div> -->
-    <div class="form-group">
-      <label for="username">Email:</label>
-      <input type="text" name="email" class="form-control" required>
+    <h2>Sign In</h2>
+
+    <!-- Hidden div to store flash messages for JavaScript -->
+    <div id="flash-messages" style="display: none;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-item" data-category="{{ category }}" data-message="{{ message }}"></div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
-    <div class="form-group">
-      <label for="password">Password:</label>
-      <input type="password" name="password" class="form-control" required>
+    <!-- Bootstrap Modal for Flash Messages -->
+    <div class="modal fade" id="flashModal" tabindex="-1" aria-labelledby="flashModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="flashModalLabel">Notification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="flashModalBody">
+                    <!-- Flash messages will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <button  type="submit" class="btn btn-success mt-3">Sign In</button>
-  </form>
-  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <!-- Sign In Form -->
+    <form method="POST" action="{{ url_for('auth.submit_sign_in') }}">
+        <div class="form-group mb-3">
+            <label for="email">Email:</label>
+            <input type="email" name="email" class="form-control" required>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="password">Password:</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+        
+        <button type="submit" class="btn btn-success mt-3">Sign In</button>
+    </form>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    
+    <!-- Flash Messages Modal JavaScript -->
+    <script>
+        function displayFlashMessages() {
+    // Find all flash message items
+    const flashItems = document.querySelectorAll('#flash-messages .flash-item');
+    
+    // Find the modal body where we'll put the messages
+    const modalBody = document.getElementById('flashModalBody');
+    
+    // Check if there are any flash messages
+    if (flashItems.length > 0) {
+        
+        // Clear any existing content in the modal
+        modalBody.innerHTML = '';
+        
+        // Go through each flash message one by one
+        for (let i = 0; i < flashItems.length; i++) {
+            const item = flashItems[i];
+            
+            // Get the category (success, danger, etc.) and message text
+            const category = item.getAttribute('data-category');
+            const message = item.getAttribute('data-message');
+            
+            // Create the HTML for this alert
+            const alertHTML = '<div class="alert alert-' + category + ' alert-dismissible fade show" role="alert">' +
+                             message ;
+            
+            // Add this alert to the modal body
+            modalBody.innerHTML = modalBody.innerHTML + alertHTML;
+        }
+        
+        // Find the modal element
+        const modalElement = document.getElementById('flashModal');
+        
+        // Create a new Bootstrap modal and show it
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        // Hide the modal after 2 seconds
+        setTimeout(function() {
+            modal.hide();
+        }, 2000);
+    }
+}
+
+        // Execute when DOM is ready
+        document.addEventListener('DOMContentLoaded', displayFlashMessages);
+    </script>
 </body>
 </html>
