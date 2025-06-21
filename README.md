@@ -33,7 +33,7 @@ This is a simple Flask web application for conducting quiz competitions. It has 
 4. Run the app:
 
    ```bash
-   python app.py
+   python run.py
    ```
 
 ## 🛠️ Tech Stack
