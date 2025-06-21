@@ -263,3 +263,308 @@ def get_quiz(quiz_author_id,section_name):
             'success': False,
             'error': 'Internal server error'
         }), 500
+    
+
+@author_bp.route('/authors_list', methods=['GET'])
+def get_authors():
+    """
+    Fetch all authors with their basic information
+    Returns JSON list of all authors
+    """
+    try:
+        # Query all authors with user information (if needed)
+        authors = db.session.query(Authors, Users).join(
+            Users, Authors.author_user_id == Users.user_id
+        ).all()
+        
+        # Alternative: Simple query if you don't need user details
+        # authors = Authors.query.all()
+        
+        authors_list = []
+        for author, user in authors:
+            author_data = {
+                'author_id': author.author_id,
+                'author_name': author.author_name,
+                'author_email': author.author_email,
+                'author_subject_a': author.author_subject_a,
+                'author_subject_b': author.author_subject_b,
+                'author_subject_c': author.author_subject_c,
+                'author_subject_d': author.author_subject_d,
+                'user_name': user.user_name,  # From Users table
+                'user_role': user.user_role   # From Users table
+            }
+            authors_list.append(author_data)
+        print('author_data',author_data)
+        return jsonify({
+            'success': True,
+            'data': authors_list,
+            'total': len(authors_list)
+        }), 200
+        
+    except Exception as e:
+        #logger.error(f"Error fetching authors: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to fetch authors',
+            'error': str(e)
+        }), 500
+
+
+"""
+@author_bp.route('/api/authors/<int:author_id>', methods=['GET'])
+def get_author_by_id(author_id):
+    
+    #Fetch a specific author by ID with detailed information
+    
+    try:
+        author_data = db.session.query(Authors, Users).join(
+            Users, Authors.author_user_id == Users.user_id
+        ).filter(Authors.author_id == author_id).first()
+        
+        if not author_data:
+            return jsonify({
+                'success': False,
+                'message': 'Author not found'
+            }), 404
+        
+        author, user = author_data
+        
+        # Get quiz statistics for this author
+        quiz_stats = db.session.query(
+            func.count(Quizzes.quiz_id).label('total_quizzes'),
+            func.avg(Quizzes.quiz_average_score).label('avg_score'),
+            func.sum(Quizzes.quiz_completions).label('total_completions')
+        ).filter(Quizzes.quiz_author_id == author_id).first()
+        
+        author_detail = {
+            'author_id': author.author_id,
+            'author_name': author.author_name,
+            'author_email': author.author_email,
+            'author_subject_a': author.author_subject_a,
+            'author_subject_b': author.author_subject_b,
+            'author_subject_c': author.author_subject_c,
+            'author_subject_d': author.author_subject_d,
+            'user_name': user.user_name,
+            'user_role': user.user_role,
+            'statistics': {
+                'total_quizzes': quiz_stats.total_quizzes or 0,
+                'average_score': float(quiz_stats.avg_score or 0),
+                'total_completions': quiz_stats.total_completions or 0
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': author_detail
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching author {author_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to fetch author details',
+            'error': str(e)
+        }), 500
+
+@author_bp.route('/api/authors/stats', methods=['GET'])
+def get_authors_statistics():
+    
+    #Get overall statistics about authors
+    
+    try:
+        # Total authors
+        total_authors = Authors.query.count()
+        
+        # Active authors (those who created quizzes recently)
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        active_authors = db.session.query(Authors).join(
+            Quizzes, Authors.author_id == Quizzes.quiz_author_id
+        ).filter(Quizzes.created_at >= thirty_days_ago).distinct().count()
+        
+        # Top subjects
+        subject_counts = {}
+        authors = Authors.query.all()
+        for author in authors:
+            subjects = [author.author_subject_a, author.author_subject_b, 
+                       author.author_subject_c, author.author_subject_d]
+            for subject in subjects:
+                if subject and subject.strip():
+                    subject_counts[subject] = subject_counts.get(subject, 0) + 1
+        
+        # Sort subjects by popularity
+        top_subjects = sorted(subject_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        # Recent authors (joined in last 30 days)
+        # Assuming you have a created_at field or similar
+        # recent_authors = Authors.query.filter(Authors.created_at >= thirty_days_ago).count()
+        
+        stats = {
+            'total_authors': total_authors,
+            'active_authors': active_authors,
+            'top_subjects': [{'subject': subject, 'count': count} for subject, count in top_subjects],
+            # 'recent_authors': recent_authors
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': stats
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching author statistics: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to fetch statistics',
+            'error': str(e)
+        }), 500
+
+@author_bp.route('/api/authors/search', methods=['GET'])
+def search_authors():
+    
+    #Search authors by name, email, or subject
+    
+    try:
+        # Get search parameters
+        query = request.args.get('q', '').strip()
+        subject = request.args.get('subject', '').strip()
+        limit = request.args.get('limit', 20, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        
+        # Build the query
+        authors_query = db.session.query(Authors, Users).join(
+            Users, Authors.author_user_id == Users.user_id
+        )
+        
+        # Apply search filters
+        if query:
+            search_filter = f"%{query}%"
+            authors_query = authors_query.filter(
+                db.or_(
+                    Authors.author_name.ilike(search_filter),
+                    Authors.author_email.ilike(search_filter),
+                    Users.user_name.ilike(search_filter)
+                )
+            )
+        
+        if subject:
+            subject_filter = f"%{subject}%"
+            authors_query = authors_query.filter(
+                db.or_(
+                    Authors.author_subject_a.ilike(subject_filter),
+                    Authors.author_subject_b.ilike(subject_filter),
+                    Authors.author_subject_c.ilike(subject_filter),
+                    Authors.author_subject_d.ilike(subject_filter)
+                )
+            )
+        
+        # Get total count for pagination
+        total_count = authors_query.count()
+        
+        # Apply pagination
+        authors = authors_query.offset(offset).limit(limit).all()
+        
+        authors_list = []
+        for author, user in authors:
+            author_data = {
+                'author_id': author.author_id,
+                'author_name': author.author_name,
+                'author_email': author.author_email,
+                'author_subject_a': author.author_subject_a,
+                'author_subject_b': author.author_subject_b,
+                'author_subject_c': author.author_subject_c,
+                'author_subject_d': author.author_subject_d,
+                'user_name': user.user_name,
+                'user_role': user.user_role
+            }
+            authors_list.append(author_data)
+        
+        return jsonify({
+            'success': True,
+            'data': authors_list,
+            'total': total_count,
+            'limit': limit,
+            'offset': offset,
+            'has_more': offset + limit < total_count
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error searching authors: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to search authors',
+            'error': str(e)
+        }), 500
+
+@author_bp.route('/api/authors/<int:author_id>/quizzes', methods=['GET'])
+def get_author_quizzes(author_id):
+    
+    #Get all quizzes created by a specific author
+    
+    try:
+        # Verify author exists
+        author = Authors.query.get(author_id)
+        if not author:
+            return jsonify({
+                'success': False,
+                'message': 'Author not found'
+            }), 404
+        
+        # Get author's quizzes
+        quizzes = Quizzes.query.filter_by(quiz_author_id=author_id).order_by(
+            desc(Quizzes.created_at)
+        ).all()
+        
+        quizzes_list = []
+        for quiz in quizzes:
+            quiz_data = {
+                'quiz_id': quiz.quiz_id,
+                'quiz_title': quiz.quiz_title,
+                'quiz_subject': quiz.quiz_subject,
+                'quiz_num_questions': quiz.quiz_num_questions,
+                'quiz_maximum_marks': float(quiz.quiz_maximum_marks),
+                'quiz_duration': quiz.quiz_duration,
+                'quiz_status': quiz.quiz_status,
+                'quiz_completions': quiz.quiz_completions,
+                'quiz_average_score': float(quiz.quiz_average_score or 0),
+                'created_at': quiz.created_at.isoformat() if quiz.created_at else None,
+                'quiz_difficulty_level': quiz.quiz_difficulty_level
+            }
+            quizzes_list.append(quiz_data)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'author': {
+                    'author_id': author.author_id,
+                    'author_name': author.author_name,
+                    'author_email': author.author_email
+                },
+                'quizzes': quizzes_list,
+                'total_quizzes': len(quizzes_list)
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching quizzes for author {author_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to fetch author quizzes',
+            'error': str(e)
+        }), 500
+
+# Error handlers
+@author_bp.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'success': False,
+        'message': 'Resource not found'
+    }), 404
+
+@author_bp.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return jsonify({
+        'success': False,
+        'message': 'Internal server error'
+    }), 500
+"""

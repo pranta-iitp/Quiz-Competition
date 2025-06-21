@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Participants - Quiz Application</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .participant-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .participant-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .subject-badge {
+            font-size: 0.75rem;
+            margin: 2px;
+        }
+        .participant-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .stats-card {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+            color: white;
+            border-radius: 10px;
+        }
+        .search-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .no-participants {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .preferred-subjects {
+            max-height: 60px;
+            overflow-y: auto;
+        }
+        .activity-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .active { background-color: #28a745; }
+        .inactive { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Quiz Application
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/authors">
+                            <i class="fas fa-users me-1"></i>Authors
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/participants">
+                            <i class="fas fa-user-friends me-1"></i>Participants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/quizzes">
+                            <i class="fas fa-list me-1"></i>Quizzes
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 mb-0">
+                        <i class="fas fa-user-friends me-3"></i>Quiz Participants
+                    </h1>
+                    <p class="lead mb-0">Active learners and quiz takers in our community</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card p-3 text-center">
+                        <h3 class="mb-1" id="totalParticipants">0</h3>
+                        <small>Total Participants</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Search and Filter Section -->
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search participants by name or email...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="subjectFilter">
+                        <option value="">All Preferred Subjects</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="English">English</option>
+                        <option value="History">History</option>
+                        <option value="Geography">Geography</option>
+                        <option value="Computer Science">Computer Science</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="activityFilter">
+                        <option value="">All Participants</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center bg-primary text-white">
+                    <div class="card-body">
+                        <h4 id="activeParticipants">0</h4>
+                        <small>Active Participants</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-success text-white">
+                    <div class="card-body">
+                        <h4 id="totalAttempts">0</h4>
+                        <small>Total Quiz Attempts</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-info text-white">
+                    <div class="card-body">
+                        <h4 id="avgScore">0%</h4>
+                        <small>Average Score</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-warning text-white">
+                    <div class="card-body">
+                        <h4 id="newParticipants">0</h4>
+                        <small>New This Month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner text-center">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading participants...</p>
+        </div>
+
+        <!-- Participants Grid -->
+        <div class="row" id="participantsContainer">
+            <!-- Participants will be loaded here dynamically -->
+        </div>
+
+        <!-- No Participants Message -->
+        <div class="no-participants" id="noParticipantsMessage" style="display: none;">
+            <i class="fas fa-user-slash fa-3x mb-3"></i>
+            <h4>No Participants Found</h4>
+            <p>No participants match your search criteria. Try adjusting your filters.</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Sample data structure - replace with actual API call
+        let participantsData = [];
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadParticipants();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function() {
+                filterParticipants();
+            });
+
+            // Subject filter
+            document.getElementById('subjectFilter').addEventListener('change', function() {
+                filterParticipants();
+            });
+
+            // Activity filter
+            document.getElementById('activityFilter').addEventListener('change', function() {
+                filterParticipants();
+            });
+        }
+
+        function loadParticipants() {
+            // Show loading spinner
+            document.querySelector('.loading-spinner').style.display = 'block';
+            
+            // Replace this with actual API call to your Flask backend
+            // fetch('/api/participants')
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         participantsData = data;
+            //         displayParticipants(participantsData);
+            //         updateStats();
+            //     })
+            //     .catch(error => {
+            //         console.error('Error loading participants:', error);
+            //         showError('Failed to load participants. Please try again.');
+            //     })
+            //     .finally(() => {
+            //         document.querySelector('.loading-spinner').style.display = 'none';
+            //     });
+
+            // Sample data for demonstration
+            setTimeout(() => {
+                participantsData = [
+                    {
+                        participant_id: 1,
+                        participant_name: "Alice Johnson",
+                        participant_email: "alice.johnson@email.com",
+                        preferred_subject_a: "Mathematics",
+                        preferred_subject_b: "Physics",
+                        preferred_subject_c: "Statistics",
+                        preferred_subject_d: null,
+                        quiz_attempts: 15,
+                        average_score: 87.5,
+                        last_active: "2025-06-15",
+                        status: "active",
+                        join_date: "2025-01-15"
+                    },
+                    {
+                        participant_id: 2,
+                        participant_name: "Bob Smith",
+                        participant_email: "bob.smith@email.com",
+                        preferred_subject_a: "Computer Science",
+                        preferred_subject_b: "Web Development",
+                        preferred_subject_c: "Programming",
+                        preferred_subject_d: "Database",
+                        quiz_attempts: 23,
+                        average_score: 92.3,
+                        last_active: "2025-06-17",
+                        status: "active",
+                        join_date: "2025-02-01"
+                    },
+                    {
+                        participant_id: 3,
+                        participant_name: "Carol Wilson",
+                        participant_email: "carol.wilson@email.com",
+                        preferred_subject_a: "English",
+                        preferred_subject_b: "Literature",
+                        preferred_subject_c: "Writing",
+                        preferred_subject_d: "History",
+                        quiz_attempts: 8,
+                        average_score: 78.2,
+                        last_active: "2025-05-20",
+                        status: "inactive",
+                        join_date: "2025-03-10"
+                    },
+                    {
+                        participant_id: 4,
+                        participant_name: "David Brown",
+                        participant_email: "david.brown@email.com",
+                        preferred_subject_a: "Science",
+                        preferred_subject_b: "Biology",
+                        preferred_subject_c: "Chemistry",
+                        preferred_subject_d: "Environmental Science",
+                        quiz_attempts: 31,
+                        average_score: 85.7,
+                        last_active: "2025-06-18",
+                        status: "active",
+                        join_date: "2025-05-15"
+                    }
+                ];
+                
+                displayParticipants(participantsData);
+                updateStats();
+                document.querySelector('.loading-spinner').style.display = 'none';
+            }, 1000);
+        }
+
+        function displayParticipants(participants) {
+            const container = document.getElementById('participantsContainer');
+            const noParticipantsMessage = document.getElementById('noParticipantsMessage');
+            
+            if (participants.length === 0) {
+                container.innerHTML = '';
+                noParticipantsMessage.style.display = 'block';
+                return;
+            }
+
+            noParticipantsMessage.style.display = 'none';
+            
+            container.innerHTML = participants.map(participant => `
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card participant-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="participant-avatar me-3">
+                                    ${getInitials(participant.participant_name)}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-1 d-flex align-items-center">
+                                        <span class="activity-indicator ${participant.status}"></span>
+                                        ${participant.participant_name}
+                                    </h5>
+                                    <small class="text-muted">
+                                        <i class="fas fa-envelope me-1"></i>
+                                        ${participant.participant_email}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">
+                                    <i class="fas fa-heart me-1"></i>Preferred Subjects:
+                                </h6>
+                                <div class="preferred-subjects">
+                                    ${getSubjectBadges(participant)}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h6 class="text-primary mb-0">${participant.quiz_attempts}</h6>
+                                        <small class="text-muted">Attempts</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h6 class="text-success mb-0">${participant.average_score}%</h6>
+                                        <small class="text-muted">Avg Score</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Last active: ${formatDate(participant.last_active)}
+                                </small>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Joined: ${formatDate(participant.join_date)}
+                                </small>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button class="btn btn-success btn-sm" onclick="viewParticipantHistory(${participant.participant_id})">
+                                    <i class="fas fa-chart-line me-1"></i>View History
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="contactParticipant('${participant.participant_email}')">
+                                    <i class="fas fa-envelope me-1"></i>Contact
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase();
+        }
+
+        function getSubjectBadges(participant) {
+            const subjects = [
+                participant.preferred_subject_a,
+                participant.preferred_subject_b,
+                participant.preferred_subject_c,
+                participant.preferred_subject_d
+            ].filter(subject => subject && subject.trim() !== '');
+
+            return subjects.map(subject => 
+                `<span class="badge bg-info subject-badge">${subject}</span>`
+            ).join('');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+
+        function filterParticipants() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedSubject = document.getElementById('subjectFilter').value;
+            const selectedActivity = document.getElementById('activityFilter').value;
+            
+            const filteredParticipants = participantsData.filter(participant => {
+                const matchesSearch = participant.participant_name.toLowerCase().includes(searchTerm) ||
+                                    participant.participant_email.toLowerCase().includes(searchTerm);
+                
+                const matchesSubject = selectedSubject === '' || 
+                                     [participant.preferred_subject_a, participant.preferred_subject_b, 
+                                      participant.preferred_subject_c, participant.preferred_subject_d]
+                                     .some(subject => subject && subject.includes(selectedSubject));
+                
+                const matchesActivity = selectedActivity === '' || participant.status === selectedActivity;
+                
+                return matchesSearch && matchesSubject && matchesActivity;
+            });
+            
+            displayParticipants(filteredParticipants);
+        }
+
+        function updateStats() {
+            const totalParticipants = participantsData.length;
+            const activeParticipants = participantsData.filter(p => p.status === 'active').length;
+            const totalAttempts = participantsData.reduce((sum, p) => sum + p.quiz_attempts, 0);
+            const avgScore = participantsData.reduce((sum, p) => sum + p.average_score, 0) / totalParticipants;
+            const newParticipants = participantsData.filter(p => {
+                const joinDate = new Date(p.join_date);
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                return joinDate >= oneMonthAgo;
+            }).length;
+
+            document.getElementById('totalParticipants').textContent = totalParticipants;
+            document.getElementById('activeParticipants').textContent = activeParticipants;
+            document.getElementById('totalAttempts').textContent = totalAttempts;
+            document.getElementById('avgScore').textContent = Math.round(avgScore) + '%';
+            document.getElementById('newParticipants').textContent = newParticipants;
+        }
+
+        function viewParticipantHistory(participantId) {
+            // Redirect to participant's quiz history page
+            window.location.href = `/participant/${participantId}/history`;
+        }
+
+        function contactParticipant(email) {
+            // Open email client
+            window.location.href = `mailto:${email}`;
+        }
+
+        function showError(message) {
+            // You can implement a toast notification or alert here
+            alert(message);
+        }
+    </script>
+</body>
+</html>

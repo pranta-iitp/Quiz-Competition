@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Authors - Quiz Application</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .author-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .author-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .subject-badge {
+            font-size: 0.75rem;
+            margin: 2px;
+        }
+        .author-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .stats-card {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border-radius: 10px;
+        }
+        .search-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .no-authors {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Quiz Application
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/authors">
+                            <i class="fas fa-users me-1"></i>Authors
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/quizzes">
+                            <i class="fas fa-list me-1"></i>Quizzes
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 mb-0">
+                        <i class="fas fa-users me-3"></i>Quiz Authors
+                    </h1>
+                    <p class="lead mb-0">Discover talented quiz creators and their expertise</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card p-3 text-center">
+                        <h3 class="mb-1" id="totalAuthors">0</h3>
+                        <small>Total Authors</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Search and Filter Section -->
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search authors by name or email...">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="subjectFilter">
+                        <option value="">All Subjects</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="English">English</option>
+                        <option value="History">History</option>
+                        <option value="Geography">Geography</option>
+                        <option value="Computer Science">Computer Science</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading authors...</p>
+        </div>
+
+        <!-- Authors Grid -->
+        <div class="row" id="authorsContainer">
+            <!-- Authors will be loaded here dynamically -->
+        </div>
+
+        <!-- No Authors Message -->
+        <div class="no-authors" id="noAuthorsMessage" style="display: none;">
+            <i class="fas fa-user-slash fa-3x mb-3"></i>
+            <h4>No Authors Found</h4>
+            <p>No authors match your search criteria. Try adjusting your filters.</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Sample data structure - replace with actual API call
+        let authorsData = [];
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAuthors();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function() {
+                filterAuthors();
+            });
+
+            // Subject filter
+            document.getElementById('subjectFilter').addEventListener('change', function() {
+                filterAuthors();
+            });
+        }
+
+        function loadAuthors() {
+            // Show loading spinner
+            document.querySelector('.loading-spinner').style.display = 'block';
+            
+            //Replace this with actual API call to your Flask backend
+            fetch('/author/authors_list')
+                .then(response => response.json())
+                .then(responseData => {
+                    authorsData = responseData.data;
+                    displayAuthors(authorsData);
+                    updateStats();
+                })
+                .catch(error => {
+                    console.error('Error loading authors:', error);
+                    showError('Failed to load authors. Please try again.');
+                })
+                .finally(() => {
+                    document.querySelector('.loading-spinner').style.display = 'none';
+                });
+
+            // Sample data for demonstration
+            //setTimeout(() => {
+                // authorsData = [
+                //     {
+                //         author_id: 1,
+                //         author_name: "Dr. John Smith",
+                //         author_email: "john.smith@email.com",
+                //         author_subject_a: "Mathematics",
+                //         author_subject_b: "Physics",
+                //         author_subject_c: "Statistics",
+                //         author_subject_d: null
+                //     },
+                //     {
+                //         author_id: 2,
+                //         author_name: "Prof. Sarah Johnson",
+                //         author_email: "sarah.johnson@email.com",
+                //         author_subject_a: "English",
+                //         author_subject_b: "Literature",
+                //         author_subject_c: "Creative Writing",
+                //         author_subject_d: "History"
+                //     },
+                //     {
+                //         author_id: 3,
+                //         author_name: "Dr. Michael Chen",
+                //         author_email: "michael.chen@email.com",
+                //         author_subject_a: "Computer Science",
+                //         author_subject_b: "Data Structures",
+                //         author_subject_c: "Algorithms",
+                //         author_subject_d: "Web Development"
+                //     }
+                // ];
+                
+                //displayAuthors(authorsData);
+        //         updateStats();
+        //         document.querySelector('.loading-spinner').style.display = 'none';
+        //     }, 1000);
+         }
+
+        function displayAuthors(authors) {
+            //console.log('authors'+authors);
+            const container = document.getElementById('authorsContainer');
+            const noAuthorsMessage = document.getElementById('noAuthorsMessage');
+            
+            if (authors.length === 0) {
+                container.innerHTML = '';
+                noAuthorsMessage.style.display = 'block';
+                return;
+            }
+
+            noAuthorsMessage.style.display = 'none';
+            for (var i = 0; i < authors.length; i++) {
+    var author = authors[i];
+    console.log('author:'+author);
+}
+            // container.innerHTML = authors.map(author => `
+            //     <div class="col-lg-4 col-md-6 mb-4">
+            //         <div class="card author-card h-100">
+            //             <div class="card-body">
+            //                 <div class="d-flex align-items-center mb-3">
+            //                     <div class="author-avatar me-3">
+            //                         ${getInitials(author.author_name)}
+            //                     </div>
+            //                     <div>
+            //                         <h5 class="card-title mb-1">${author.author_name}</h5>
+            //                         <small class="text-muted">
+            //                             <i class="fas fa-envelope me-1"></i>
+            //                             ${author.author_email}
+            //                         </small>
+            //                     </div>
+            //                 </div>
+                            
+            //                 <div class="mb-3">
+            //                     <h6 class="text-muted mb-2">
+            //                         <i class="fas fa-book me-1"></i>Subject Expertise:
+            //                     </h6>
+            //                     <div class="subjects-container">
+            //                         ${getSubjectBadges(author)}
+            //                     </div>
+            //                 </div>
+                            
+            //                 <div class="d-flex justify-content-between align-items-center">
+            //                     <button class="btn btn-primary btn-sm" onclick="viewAuthorQuizzes(${author.author_id})">
+            //                         <i class="fas fa-list me-1"></i>View Quizzes
+            //                     </button>
+            //                     <button class="btn btn-outline-secondary btn-sm" onclick="contactAuthor('${author.author_email}')">
+            //                         <i class="fas fa-envelope me-1"></i>Contact
+            //                     </button>
+            //                 </div>
+            //             </div>
+            //         </div>
+            //     </div>
+            // `).join('');
+
+            var html = '';
+            var authorInitial='';
+for (var i = 0; i < authors.length; i++) {
+    var author = authors[i];
+    authorInitial = `${getInitials(author.author_name)}`;
+
+
+    html += '<div class="col-lg-4 col-md-6 mb-4">';
+    html +=   '<div class="card author-card h-100">';
+    html +=     '<div class="card-body">';
+    html +=       '<div class="d-flex align-items-center mb-3">';
+    html +=         '<div class="author-avatar me-3">' +
+                     authorInitial    +
+                    '</div>';
+    html +=         '<div>';
+    html +=           '<h5 class="card-title mb-1">' + `${author.author_email}` + '</h5>';
+    html +=           '<small class="text-muted">';
+    html +=             '<i class="fas fa-envelope me-1"></i>' + `${author.author_email}`;
+    html +=           '</small>';
+    html +=         '</div>';
+    html +=       '</div>';
+
+    html +=       '<div class="mb-3">';
+    html +=         '<h6 class="text-muted mb-2">';
+    html +=           '<i class="fas fa-book me-1"></i>Subject Expertise:';
+    html +=         '</h6>';
+    html +=         '<div class="subjects-container">' +
+                        `${getSubjectBadges(author)}` +
+                    '</div>';
+    html +=       '</div>';
+
+    html +=       '<div class="d-flex justify-content-between align-items-center">';
+    html +=         '<button class="btn btn-primary btn-sm" onclick="viewAuthorQuizzes(' + `${author.author_id}` + ')">';
+    html +=           '<i class="fas fa-list me-1"></i>View Quizzes';
+    html +=         '</button>';
+    html +=         '<button class="btn btn-outline-secondary btn-sm" onclick="contactAuthor(\'' + `${author.author_email}` + '\')">';
+    html +=           '<i class="fas fa-envelope me-1"></i>Contact';
+    html +=         '</button>';
+    html +=       '</div>';
+
+    html +=     '</div>';
+    html +=   '</div>';
+    html += '</div>';
+}
+container.innerHTML = html;
+
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase();
+        }
+
+        function getSubjectBadges(author) {
+            const subjects = [
+                author.author_subject_a,
+                author.author_subject_b,
+                author.author_subject_c,
+                author.author_subject_d
+            ].filter(subject => subject && subject.trim() !== '');
+
+            return subjects.map(subject => 
+                `<span class="badge bg-secondary subject-badge">${subject}</span>`
+            ).join('');
+        }
+
+        function filterAuthors() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedSubject = document.getElementById('subjectFilter').value;
+            
+            const filteredAuthors = authorsData.filter(author => {
+                const matchesSearch = author.author_name.toLowerCase().includes(searchTerm) ||
+                                    author.author_email.toLowerCase().includes(searchTerm);
+                
+                const matchesSubject = selectedSubject === '' || 
+                                     [author.author_subject_a, author.author_subject_b, 
+                                      author.author_subject_c, author.author_subject_d]
+                                     .some(subject => subject && subject.includes(selectedSubject));
+                
+                return matchesSearch && matchesSubject;
+            });
+            
+            displayAuthors(filteredAuthors);
+        }
+
+        function updateStats() {
+            document.getElementById('totalAuthors').textContent = authorsData.length;
+        }
+
+        function viewAuthorQuizzes(authorId) {
+            // Redirect to author's quizzes page
+            window.location.href = `/author/${authorId}/quizzes`;
+        }
+
+        function contactAuthor(email) {
+            // Open email client
+            window.location.href = `mailto:${email}`;
+        }
+
+        function showError(message) {
+            // You can implement a toast notification or alert here
+            alert(message);
+        }
+    </script>
+</body>
+</html>
